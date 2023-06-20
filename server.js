@@ -2,36 +2,39 @@ const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
-const db = mysql.createConnection(
-  {
-    host: 'localhost',
-    // MySQL username,
-    user: 'root',
-    // MySQL password
-    password: 'Rm2023!',
-    database: 'tracker_db'
-  },
-  console.log(`Connected to the tracker_db database.`)
-);
+const db = mysql.createConnection({
+  host: 'localhost',
+  // MySQL username,
+  user: 'root',
+  // MySQL password
+  password: 'Rm2023!',
+  database: 'tracker_db'
+});
+
+db.connect((err) => {
+  if (err) throw err;
+  console.log('Connected to the tracker_db database.');
+  startMenu();
+});
 
 const startMenu = () => {
   inquirer.prompt({
-      message: 'What would you like to do?',
-      name: 'menu',
-      type: 'list',
-      choices: [ 
-        'View all departments',
-        'View all jobs',
-        'View all employees',
-        'Add a department',
-        'Add a job',
-        'Add an employee',
-        'Update employee job',
-        'Exit',
-      ],
-    })
+    message: 'What would you like to do?',
+    name: 'menu',
+    type: 'list',
+    choices: [
+      'View all departments',
+      'View all jobs',
+      'View all employees',
+      'Add a department',
+      'Add a job',
+      'Add an employee',
+      'Update employee job',
+      'Exit',
+    ],
+  })
     .then(response => {
-        switch (response.menu) {
+      switch (response.menu) {
         case 'View all departments':
           viewDepartment();
           break;
@@ -54,16 +57,16 @@ const startMenu = () => {
           updateEmployee();
           break;
         case "Exit":
-          connection.end();
+          db.end();
           break;
         default:
-          connection.end();
+          db.end();
       }
     });
 };
 
 const viewDepartment = () => {
-  connection.query('SELECT * FROM department', function (err, res) {
+  db.query('SELECT * FROM department', function (err, res) {
     if (err) throw err;
     console.table(res);
     startMenu();
@@ -71,7 +74,7 @@ const viewDepartment = () => {
 };
 
 const viewJobs = () => {
-  connection.query('SELECT * FROM job', function (err, res) {
+  db.query('SELECT * FROM job', function (err, res) {
     if (err) throw err;
     console.table(res);
     startMenu();
@@ -79,7 +82,7 @@ const viewJobs = () => {
 };
 
 const viewEmployees = () => {
-  connection.query(
+  db.query(
     'SELECT employee.id, first_name, last_name, title, salary, dept_name, manager_id FROM ((department JOIN job ON department.id = job.department_id) JOIN employee ON job.id = employee.job_id);',
     function (err, res) {
       if (err) throw err;
@@ -91,14 +94,14 @@ const viewEmployees = () => {
 
 const addDepartment = () => {
   inquirer.prompt([
-      {
-        name: 'department',
-        type: 'input',
-        message: 'What is the department name?',
-      },
-    ])
+    {
+      name: 'department',
+      type: 'input',
+      message: 'What is the department name?',
+    },
+  ])
     .then(answer => {
-      connection.query(
+      db.query(
         'INSERT INTO department (dept_name) VALUES (?)',
         [answer.department],
         function (err, res) {
@@ -112,24 +115,24 @@ const addDepartment = () => {
 
 const addJob = () => {
   inquirer.prompt([
-      {
-        name: 'jobTitle',
-        type: 'input',
-        message: 'What is the job title?',
-      },
-      {
-        name: 'salary',
-        type: 'input',
-        message: 'What is the salary for this job?',
-      },
-      {
-        name: 'deptId',
-        type: 'input',
-        message: 'What is the department ID number?',
-      },
-    ])
+    {
+      name: 'jobTitle',
+      type: 'input',
+      message: 'What is the job title?',
+    },
+    {
+      name: 'salary',
+      type: 'input',
+      message: 'What is the salary for this job?',
+    },
+    {
+      name: 'deptId',
+      type: 'input',
+      message: 'What is the department ID number?',
+    },
+  ])
     .then(answer => {
-      connection.query(
+      db.query(
         'INSERT INTO job (title, salary, department_id) VALUES (?, ?, ?)',
         [answer.jobTitle, answer.salary, answer.deptId],
         function (err, res) {
@@ -143,29 +146,29 @@ const addJob = () => {
 
 const addEmployee = () => {
   inquirer.prompt([
-      {
-        name: 'nameFirst',
-        type: 'input',
-        message: "What is the employee's first name?",
-      },
-      {
-        name: 'nameLast',
-        type: 'input',
-        message: "What is the employee's last name?",
-      },
-      {
-        name: 'jobId',
-        type: 'input',
-        message: "What is the employee's job id?",
-      },
-      {
-        name: 'managerId',
-        type: 'input',
-        message: 'What is the manager Id?',
-      },
-    ])
+    {
+      name: 'nameFirst',
+      type: 'input',
+      message: "What is the employee's first name?",
+    },
+    {
+      name: 'nameLast',
+      type: 'input',
+      message: "What is the employee's last name?",
+    },
+    {
+      name: 'jobId',
+      type: 'input',
+      message: "What is the employee's job id?",
+    },
+    {
+      name: 'managerId',
+      type: 'input',
+      message: 'What is the manager Id?',
+    },
+  ])
     .then(answer => {
-      connection.query(
+      db.query(
         'INSERT INTO employee (first_name, last_name, job_id, manager_id) VALUES (?, ?, ?, ?)',
         [answer.nameFirst, answer.nameLast, answer.jobId, answer.managerId],
         function (err, res) {
@@ -192,7 +195,7 @@ const updateEmployee = () => {
       },
     ])
     .then(answer => {
-      connection.query(
+      db.query(
         'UPDATE employee SET job_id=? WHERE id=?',
         [answer.jobId, answer.id],
         function (err, res) {
