@@ -13,9 +13,10 @@ const db = mysql.createConnection(
   },
   console.log(`Connected to the tracker_db database.`)
 );
+
 const startMenu = () => {
   inquirer.prompt({
-      message: 'What would you like to do today?',
+      message: 'What would you like to do?',
       name: 'menu',
       type: 'list',
       choices: [ 
